@@ -1,7 +1,10 @@
-use std::{collections::HashMap, io};
+use std::io;
+
+mod note;
+use note::NoteMgr;
 
 fn main() {
-    let mut notes: HashMap<String, String> = HashMap::new();
+    let mut note_mgr = NoteMgr::new();
 
     loop {
         println!("next command?");
@@ -11,24 +14,24 @@ fn main() {
             Ok(x) if x == 0 => println!("no command provided"),
             Ok(_) => {
                 command.pop();
-                handle_command(&command, &mut notes);
+                handle_command(&command, &mut note_mgr);
             }
             Err(err) => println!("error on reading command: {err}"),
         }
     }
 }
 
-fn handle_command(command: &str, notes: &mut HashMap<String, String>) {
+fn handle_command(command: &str, note_mgr: &mut NoteMgr) {
     match command {
-        "add" => handle_add_note_command(notes),
-        "ls" => handle_list_notes_command(notes),
-        "help" => handle_help_command(),
-        "rm" => handle_rm_note_command(notes),
+        "add" => handle_add_note_command(note_mgr),
+        "ls" => handle_list_notes_command(note_mgr),
+        "rm" => handle_rm_note_command(note_mgr),
+        "search" => handle_search_notes_command(note_mgr),
         _ => println!("boh"),
     }
 }
 
-fn handle_add_note_command(notes: &mut HashMap<String, String>) {
+fn handle_add_note_command(note_mgr: &mut NoteMgr) {
     println!("write the note");
 
     let mut new_note_content = String::new();
@@ -45,15 +48,35 @@ fn handle_add_note_command(notes: &mut HashMap<String, String>) {
     }
 
     new_note_content.pop();
-    notes.insert(random_string::generate(6, "123456789"), new_note_content);
+    note_mgr.add(String::from("a title"), new_note_content);
 }
 
-fn handle_list_notes_command(notes: &HashMap<String, String>) {
-    for (id, content) in notes.iter() {
-        println!("id -> {id}, content -> {content}");
+fn handle_list_notes_command(note_mgr: &mut NoteMgr) {
+    for note in note_mgr.notes.iter() {
+        println!("id -> {0}, content -> {1}", note.id, note.content);
     }
 }
 
-fn handle_help_command() {}
+fn handle_search_notes_command(note_mgr: &mut NoteMgr) {
+    println!("enter the search key");
 
-fn handle_rm_note_command(notes: &mut HashMap<String, String>) {}
+    let mut search_key = String::new();
+    let mut search_key_ok = false;
+
+    while !search_key_ok {
+        match io::stdin().read_line(&mut search_key) {
+            Ok(0) => {}
+            Ok(_) => {
+                search_key_ok = true;
+            }
+            Err(_) => {}
+        }
+    }
+
+    search_key.pop();
+    for note in note_mgr.search(&search_key).iter() {
+        println!("id -> {0}, content -> {1}", note.id, note.content);
+    }
+}
+
+fn handle_rm_note_command(note_mgr: &mut NoteMgr) {}
