@@ -3,57 +3,25 @@ use std::io;
 mod note;
 use note::NoteMgr;
 
+mod command;
+
+mod ui;
+
 fn main() {
     let mut note_mgr = NoteMgr::new();
 
     loop {
-        println!("next command?");
-
-        let mut command = String::new();
-        match io::stdin().read_line(&mut command) {
-            Ok(x) if x == 0 => println!("no command provided"),
-            Ok(_) => {
-                command.pop();
-                handle_command(&command, &mut note_mgr);
+        match command::ask_command() {
+            Some(command::Command::Add) => {
+                let command::CommandWithInput::Add { title, content } =
+                    command::ask_input_for_add_command();
+                note_mgr.add(title, content);
             }
-            Err(err) => println!("error on reading command: {err}"),
-        }
-    }
-}
-
-fn handle_command(command: &str, note_mgr: &mut NoteMgr) {
-    match command {
-        "add" => handle_add_note_command(note_mgr),
-        "ls" => handle_list_notes_command(note_mgr),
-        "rm" => handle_rm_note_command(note_mgr),
-        "search" => handle_search_notes_command(note_mgr),
-        _ => println!("boh"),
-    }
-}
-
-fn handle_add_note_command(note_mgr: &mut NoteMgr) {
-    println!("write the note");
-
-    let mut new_note_content = String::new();
-    let mut content_ok = false;
-
-    while !content_ok {
-        match io::stdin().read_line(&mut new_note_content) {
-            Ok(0) => {}
-            Ok(_) => {
-                content_ok = true;
+            Some(command::Command::Ls) => {
+                ui::show_notes(&note_mgr.notes);
             }
-            Err(_) => {}
+            _ => {}
         }
-    }
-
-    new_note_content.pop();
-    note_mgr.add(String::from("a title"), new_note_content);
-}
-
-fn handle_list_notes_command(note_mgr: &mut NoteMgr) {
-    for note in note_mgr.notes.iter() {
-        println!("id -> {0}, content -> {1}", note.id, note.content);
     }
 }
 
@@ -78,5 +46,3 @@ fn handle_search_notes_command(note_mgr: &mut NoteMgr) {
         println!("id -> {0}, content -> {1}", note.id, note.content);
     }
 }
-
-fn handle_rm_note_command(note_mgr: &mut NoteMgr) {}
